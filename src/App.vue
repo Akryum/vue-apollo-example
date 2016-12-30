@@ -7,6 +7,16 @@
 
     <div class="tag-of-the-day" v-if="randomTag">
       <h2>Tag of the day</h2>
+      <div class="type">
+        <label>
+          <input type="radio" value="random" v-model="showTag" />
+          Random tag
+        </label>
+        <label>
+          <input type="radio" value="last" v-model="showTag" />
+          Last tag
+        </label>
+      </div>
       <div class="tag">
         {{ randomTag.label }} - {{ randomTag.type }}
       </div>
@@ -14,7 +24,10 @@
 
     <h2>Tags</h2>
     <div class="info">
-      Watch query updates: {{ updateCount }}
+      <label><input type="checkbox" v-model="skipQuery" /> Skip query (this disables the apollo query)</label>
+    </div>
+    <div class="info">
+      Query updates: {{ updateCount }}
     </div>
     <div class="type">
       <label>
@@ -30,6 +43,9 @@
       <div v-for="tag in tags" :class="['tag',{optimistic: tag.id === -1}]" :title="tag.id">
         {{tag.label}}
       </div>
+    </div>
+    <div class="loading" v-if="tagsLoading">
+      <img src="./assets/loader.gif" /> Loading tags...
     </div>
     <form @submit.prevent="addTag">
       <input v-model="newTag" placeholder="New tag" autocomplete="off" />
@@ -58,6 +74,9 @@ export default {
     newTag: null,
     updateCount: 0,
     type: 'City',
+    skipQuery: false,
+    tagsLoading: 0,
+    showTag: 'random',
     // Optional properties init
     tags: [],
     randomTag: null,
@@ -66,36 +85,60 @@ export default {
   }),
   apollo: {
     // 'tags' data property on vue instance
-    tags: {
-      // GraphQL Query
-      query: gql`query tagList ($type: String!) {
-        tags(type: $type) {
-          id
-          label
-        }
-      }`,
-      // Reactive variables
-      variables() {
-        return {
-          type: this.type,
-        };
-      },
-      // Polling
-      // pollInterval: 300, // ms
-      // Hook example
-      result() {
-        this.updateCount ++;
-      },
+    tags () {
+      console.log(this.type)
+      return {
+        // GraphQL Query
+        query: gql`query tagList ($type: String!) {
+          tags(type: $type) {
+            id
+            label
+          }
+        }`,
+        // Reactive variables
+        variables() {
+          return {
+            type: this.type,
+          };
+        },
+        // Polling
+        // pollInterval: 300, // ms
+        // Hook example
+        result() {
+          this.updateCount ++;
+        },
+        // Disable the query
+        skip() {
+          return this.skipQuery
+        },
+        // Loading key
+        loadingKey: 'tagsLoading',
+      }
     },
 
     // Random tag
-    randomTag: gql`{
-      randomTag {
-        id
-        label
-        type
-      }
-    }`,
+    randomTag: {
+      query () {
+        if (this.showTag === 'random') {
+          return gql`{
+            randomTag {
+              id
+              label
+              type
+            }
+          }`
+        } else if (this.showTag === 'last') {
+          return gql`{
+            lastTag {
+              id
+              label
+              type
+            }
+          }`
+        }
+      },
+      update: data => data.randomTag || data.lastTag,
+    },
 
     // Pages
     tagsPage: {
@@ -136,6 +179,10 @@ export default {
         result(data) {
           console.log(data);
           this.tags.push(data.tagAdded);
+        },
+        // Disable the subscription
+        skip() {
+          return this.skipQuery
         },
       },
     },
@@ -256,7 +303,8 @@ body, input {
   text-align: center;
 }
 
-.info {
+.info,
+.loading {
   color: #999;
   margin: 12px;
 }

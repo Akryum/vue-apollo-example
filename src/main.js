@@ -5,7 +5,7 @@ import { Client } from 'subscriptions-transport-ws';
 import VueApollo, { addGraphQLSubscriptions } from 'vue-apollo';
 
 const networkInterface = createNetworkInterface({
-  uri: 'http://localhost:3000/graphql',
+  uri: 'http://localhost:3020/graphql',
   transportBatching: true,
 });
 
