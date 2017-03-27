@@ -70,19 +70,21 @@ const pageSize = 10;
 
 export default {
   name: 'app',
-  data: () => ({
-    newTag: null,
-    updateCount: 0,
-    type: 'City',
-    skipQuery: false,
-    tagsLoading: 0,
-    showTag: 'random',
-    // Optional properties init
-    tags: [],
-    randomTag: null,
-    page: 0,
-    showMoreEnabled: true,
-  }),
+  data () {
+    return {
+      newTag: null,
+      updateCount: 0,
+      type: 'City',
+      skipQuery: false,
+      tagsLoading: 0,
+      showTag: 'random',
+      showMoreEnabled: true,
+      page: 0,
+      // Optional properties init
+      /* tags: [],
+      randomTag: null, */
+    }
+  },
   apollo: {
     // 'tags' data property on vue instance
     tags () {
@@ -113,6 +115,8 @@ export default {
         },
         // Loading key
         loadingKey: 'tagsLoading',
+
+        fetchPolicy: 'cache-and-network',
       }
     },
 
@@ -159,8 +163,8 @@ export default {
       },
     },
 
-    // Subscriptions
-    subscribe: {
+    // "Notify me" Subscriptions
+    $subscribe: {
       tags: {
         query: gql`subscription tags($type: String!) {
           tagAdded(type: $type) {
@@ -177,8 +181,7 @@ export default {
         },
         // Result hook
         result(data) {
-          console.log(data);
-          this.tags.push(data.tagAdded);
+          console.log('$subscribe option', data);
         },
         // Disable the subscription
         skip() {
@@ -212,11 +215,20 @@ export default {
         // that will be updated with the optimistic response
         // and the result of the mutation
         updateQueries: {
-          tagList: (previousQueryResult, { mutationResult }) => {
+          tagList: (previousResult, { mutationResult }) => {
+            // If we added the tag already don't do anything
+            // This can be caused by the `updateQuery` of our subscribeToMore
+            if (previousResult.tags.find(tag => tag.id === mutationResult.data.addTag.id)) {
+              return previousResult
+            }
+
             // We incorporate any received result (either optimistic or real)
             // into the 'tagList' query we set up earlier
             return {
-              tags: [...previousQueryResult.tags, mutationResult.data.addTag],
+              tags: [
+                ...previousResult.tags,
+                mutationResult.data.addTag
+              ],
             };
           },
         },
@@ -250,15 +262,20 @@ export default {
           page: this.page,
           pageSize,
         },
+        // Mutate the previous result
         updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newTags = fetchMoreResult.data.tagsPage.tags;
-          const hasMore = fetchMoreResult.data.tagsPage.hasMore;
+          const newTags = fetchMoreResult.tagsPage.tags;
+          const hasMore = fetchMoreResult.tagsPage.hasMore;
 
           this.showMoreEnabled = hasMore;
 
           return {
             tagsPage: {
-              tags: [...previousResult.tagsPage.tags, ...newTags],
+              tags: [
+                ...previousResult.tagsPage.tags,
+                // Add the new tags
+                ...newTags,
+              ],
               hasMore,
             },
           };
@@ -267,6 +284,7 @@ export default {
     },
   },
   mounted() {
+    // Programmatic subscription
     const subQuery = gql`subscription tags($type: String!) {
       tagAdded(type: $type) {
         id
@@ -277,15 +295,50 @@ export default {
     const observer = this.$apollo.subscribe({
       query: subQuery,
       variables: {
-        type: 'City',
+        type: 'Companies',
+      },
+    });
+    observer.subscribe({
+      next(data) {
+        console.log('this.$apollo.subscribe', data);
       },
     });
 
-    observer.subscribe({
-      next(data) {
-        console.log(data);
-      },
-    });
+    // SubscribeToMore tags
+    this.$watch(() => this.type, (type, oldType) => {
+      if (type !== oldType || !this.tagsSub) {
+        // We need to unsubscribe before re-subscribing
+        if (this.tagsSub) {
+          this.tagsSub.unsubscribe()
+        }
+        // Subscribe
+        this.tagsSub = this.$apollo.queries.tags.subscribeToMore({
+          document: subQuery,
+          variables: {
+            type,
+          },
+          // Mutate the previous result
+          updateQuery: (previousResult, { subscriptionData }) => {
+            // If we added the tag already don't do anything
+            // This can be caused by the `updateQuery` of our addTag mutation
+            if (previousResult.tags.find(tag => tag.id === subscriptionData.data.tagAdded.id)) {
+              return previousResult
+            }
+
+            return {
+              tags: [
+                ...previousResult.tags,
+                // Add the new tag
+                subscriptionData.data.tagAdded,
+              ],
+            }
+          },
+        })
+      }
+    }, {
+      immediate: true,
+    })
+
   },
 };
 </script>
