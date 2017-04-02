@@ -86,10 +86,12 @@ export default {
     }
   },
   apollo: {
+    $client: 'a',
     // 'tags' data property on vue instance
     tags () {
       console.log(this.type)
       return {
+        // client: 'a',
         // GraphQL Query
         query: gql`query tagList ($type: String!) {
           tags(type: $type) {

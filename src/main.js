@@ -26,13 +26,25 @@ const apolloClient = new ApolloClient({
 })
 
 import VueApollo from 'vue-apollo'
-Vue.use(VueApollo, {
-  apolloClient,
+Vue.use(VueApollo)
+
+const apolloProvider = new VueApollo({
+  clients: {
+    a: apolloClient,
+  },
+  defaultClient: apolloClient,
 })
 
 import App from './App.vue'
 
+const ensureReady = apolloProvider.collect()
+
 new Vue({
   el: '#app',
+  apolloProvider,
   render: h => h(App),
+})
+
+ensureReady().then((...results) => {
+  console.log('ready', results.length)
 })
