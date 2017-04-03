@@ -45,6 +45,6 @@ new Vue({
   render: h => h(App),
 })
 
-ensureReady().then((...results) => {
-  console.log('ready', results.length)
+ensureReady().then(results => {
+  console.log(results.length, 'queries ready')
 })
