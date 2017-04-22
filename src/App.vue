@@ -47,16 +47,24 @@
     <div class="loading" v-if="tagsLoading">
       <img src="./assets/loader.gif" /> Loading tags...
     </div>
+    <div>
+      <button @click="refetchTags">Refetch</button>
+    </div>
     <form @submit.prevent="addTag">
       <input v-model="newTag" placeholder="New tag" autocomplete="off" />
     </form>
 
     <h2>Pagination</h2>
-    <div class="tag-list" v-if="tagsPage">
-      <div class="tag-list-item" v-for="tag in tagsPage.tags">
-        {{ tag.id }} - {{ tag.label }} - {{ tag.type }}
+    <div class="tag-list">
+      <template v-if="tagsPage">
+        <div class="tag-list-item" v-for="tag in tagsPage.tags">
+          {{ tag.id }} - {{ tag.label }} - {{ tag.type }}
+        </div>
+      </template>
+      <div class="loading" v-if="tagsPageLoading">
+        <img src="./assets/loader.gif" /> Loading paginated tags...
       </div>
-      <div class="actions">
+      <div class="actions" v-else>
         <button v-if="showMoreEnabled" @click="showMore">Show more</button>
       </div>
     </div>
@@ -77,6 +85,7 @@ export default {
       type: 'City',
       skipQuery: false,
       tagsLoading: 0,
+      tagsPageLoading: 0,
       showTag: 'random',
       showMoreEnabled: true,
       page: 0,
@@ -163,6 +172,7 @@ export default {
         page: 0,
         pageSize,
       },
+      loadingKey: 'tagsPageLoading',
     },
 
     // "Notify me" Subscriptions
@@ -283,6 +293,10 @@ export default {
           };
         },
       });
+    },
+
+    refetchTags () {
+      this.$apollo.queries.tags.refetch()
     },
   },
   mounted() {
