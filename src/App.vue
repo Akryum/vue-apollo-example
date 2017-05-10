@@ -144,7 +144,7 @@ export default {
           }`
         } else if (this.showTag === 'last') {
           return gql`{
-            lastTag {
+            randomTag: lastTag {
               id
               label
               type
@@ -152,7 +152,7 @@ export default {
           }`
         }
       },
-      update: data => data.randomTag || data.lastTag,
+      // update: data => data.randomTag || data.lastTag,
     },
 
     // Pages
