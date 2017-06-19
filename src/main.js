@@ -37,14 +37,8 @@ const apolloProvider = new VueApollo({
 
 import App from './App.vue'
 
-const ensureReady = apolloProvider.collect()
-
 new Vue({
   el: '#app',
   apolloProvider,
   render: h => h(App),
-})
-
-ensureReady().then(results => {
-  console.log(results.length, 'queries ready')
 })
