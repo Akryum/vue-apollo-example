@@ -76,6 +76,15 @@ import gql from 'graphql-tag';
 
 const pageSize = 10;
 
+
+const SUB_QUERY = gql`subscription tags($type: String!) {
+  tagAdded(type: $type) {
+    id
+    label
+    type
+  }
+}`;
+
 export default {
   name: 'app',
   data () {
@@ -128,6 +137,31 @@ export default {
         loadingKey: 'tagsLoading',
 
         fetchPolicy: 'cache-and-network',
+
+        subscribeToMore: {
+          document: SUB_QUERY,
+          variables () {
+            return {
+              type: this.type,
+            }
+          },
+          // Mutate the previous result
+          updateQuery: (previousResult, { subscriptionData }) => {
+            // If we added the tag already don't do anything
+            // This can be caused by the `updateQuery` of our addTag mutation
+            if (previousResult.tags.find(tag => tag.id === subscriptionData.data.tagAdded.id)) {
+              return previousResult
+            }
+
+            return {
+              tags: [
+                ...previousResult.tags,
+                // Add the new tag
+                subscriptionData.data.tagAdded,
+              ],
+            }
+          },
+        },
       }
     },
 
@@ -301,15 +335,8 @@ export default {
   },
   mounted() {
     // Programmatic subscription
-    const subQuery = gql`subscription tags($type: String!) {
-      tagAdded(type: $type) {
-        id
-        label
-        type
-      }
-    }`;
     const observer = this.$apollo.subscribe({
-      query: subQuery,
+      query: SUB_QUERY,
       variables: {
         type: 'Companies',
       },
@@ -321,7 +348,7 @@ export default {
     });
 
     // SubscribeToMore tags
-    this.$watch(() => this.type, (type, oldType) => {
+    /* this.$watch(() => this.type, (type, oldType) => {
       if (type !== oldType || !this.tagsSub) {
         // We need to unsubscribe before re-subscribing
         if (this.tagsSub) {
@@ -329,7 +356,7 @@ export default {
         }
         // Subscribe
         this.tagsSub = this.$apollo.queries.tags.subscribeToMore({
-          document: subQuery,
+          document: SUB_QUERY,
           variables: {
             type,
           },
@@ -353,7 +380,7 @@ export default {
       }
     }, {
       immediate: true,
-    })
+    }) */
 
   },
 };
