@@ -138,7 +138,7 @@ export default {
 
         fetchPolicy: 'cache-and-network',
 
-        subscribeToMore: {
+        subscribeToMore: [{
           document: SUB_QUERY,
           variables () {
             return {
@@ -147,6 +147,8 @@ export default {
           },
           // Mutate the previous result
           updateQuery: (previousResult, { subscriptionData }) => {
+            console.log('new tag', subscriptionData.data.tagAdded)
+
             // If we added the tag already don't do anything
             // This can be caused by the `updateQuery` of our addTag mutation
             if (previousResult.tags.find(tag => tag.id === subscriptionData.data.tagAdded.id)) {
@@ -161,7 +163,7 @@ export default {
               ],
             }
           },
-        },
+        }],
       }
     },
 
