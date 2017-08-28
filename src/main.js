@@ -7,7 +7,6 @@ import { SubscriptionClient, addGraphQLSubscriptions } from 'subscriptions-trans
 
 const networkInterface = createNetworkInterface({
   uri: 'http://localhost:3020/graphql',
-  transportBatching: true,
 })
 
 const wsClient = new SubscriptionClient('ws://localhost:3020/subscriptions', {
@@ -21,7 +20,6 @@ const networkInterfaceWithSubscriptions = addGraphQLSubscriptions(
 
 const apolloClient = new ApolloClient({
   networkInterface: networkInterfaceWithSubscriptions,
-  ssrForceFetchDelay: 100,
   connectToDevTools: true,
 })
 
