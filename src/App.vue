@@ -5,6 +5,10 @@
     </div>
     <h1>Vue Apollo Integration</h1>
 
+    <div class="loading" v-if="loading">
+      <img src="./assets/loader.gif" /> Loading...
+    </div>
+
     <div class="tag-of-the-day" v-if="randomTag">
       <h2>Tag of the day</h2>
       <div class="type">
@@ -65,7 +69,7 @@
         <img src="./assets/loader.gif" /> Loading paginated tags...
       </div>
       <div class="actions" v-else>
-        <button v-if="showMoreEnabled" @click="showMore">Show more</button>
+        <button v-if="true || showMoreEnabled" @click="showMore">Show more</button>
       </div>
     </div>
   </div>
@@ -93,6 +97,7 @@ export default {
       updateCount: 0,
       type: 'City',
       skipQuery: false,
+      loading: 0,
       tagsLoading: 0,
       tagsPageLoading: 0,
       showTag: 'random',
@@ -105,6 +110,7 @@ export default {
   },
   apollo: {
     $client: 'a',
+    $loadingKey: 'loading',
     // 'tags' data property on vue instance
     tags () {
       console.log(this.type)
@@ -134,7 +140,7 @@ export default {
           return this.skipQuery
         },
         // Loading key
-        loadingKey: 'tagsLoading',
+        // loadingKey: 'tagsLoading',
 
         fetchPolicy: 'cache-and-network',
 
@@ -208,7 +214,7 @@ export default {
         page: 0,
         pageSize,
       },
-      loadingKey: 'tagsPageLoading',
+      // loadingKey: 'tagsPageLoading',
     },
 
     // "Notify me" Subscriptions
