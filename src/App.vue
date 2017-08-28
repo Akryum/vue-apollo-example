@@ -319,6 +319,7 @@ export default {
 
           return {
             tagsPage: {
+              __typename: previousResult.tagsPage.__typename,
               tags: [
                 ...previousResult.tagsPage.tags,
                 // Add the new tags
