@@ -124,19 +124,23 @@ export default {
           }
         }`,
         // Reactive variables
-        variables() {
+        variables () {
           return {
             type: this.type,
           };
         },
+        // manual: true,
         // Polling
         // pollInterval: 300, // ms
         // Hook example
-        result() {
+        result (result) {
           this.updateCount ++;
+          // if (!result.loading) {
+          //   this.tags = result.data.tags
+          // }
         },
         // Disable the query
-        skip() {
+        skip () {
           return this.skipQuery
         },
         // Loading key
